@@ -13,21 +13,11 @@ module top;
   logic test_clk;
   
 	tb_ifc intf(
-		.clk(clk)
+		.clk(test_clk)
 	);
 
   // instantiate testbench and connect ports
-  instr_register_test test (
-    .clk(test_clk),
-    .load_en(intf.load_en),
-    .reset_n(intf.reset_n),
-    .operand_a(intf.operand_a),
-    .operand_b(intf.operand_b),
-    .opcode(intf.opcode),
-    .write_pointer(intf.write_pointer),
-    .read_pointer(intf.read_pointer),
-    .instruction_word(intf.instruction_word)
-   );
+ instr_register_test test (.intf(intf));
 
   // instantiate design and connect ports
   instr_register dut (
