@@ -14,11 +14,34 @@ module instr_register_test (tb_ifc intf);
 
 class transaction;
 
-	opcode_t opcode;
-	operand_t   operand_a, operand_b;
-	address_t  write_pointer;
+	rand opcode_t opcode;
+	rand operand_t   operand_a, operand_b;
+	rand address_t  write_pointer;
 
-  function void randomize_transaction;
+
+constraint const_A{
+
+operand_a > -16;
+operand_a < 16;
+
+}
+
+constraint const_B{
+
+operand_b >= 0;
+operand_b < 16;
+
+}
+
+
+constraint const_OP{
+
+opcode > 0;
+opcode < 16;
+
+}
+
+  /*function void randomize_transaction;
     // A later lab will replace this function with SystemVerilog
     // constrained random values
     //
@@ -33,7 +56,7 @@ class transaction;
     write_pointer = temp++;
   endfunction: randomize_transaction
 
-
+*/
 
 function void print_transaction;
     $display("Writing to register location %0d: ", write_pointer);
@@ -60,30 +83,71 @@ function new(virtual tb_ifc vifc);
 endfunction 
 
 
+task reset_transaction;
+
+	vifc.cb.write_pointer  <= 5'h00;   
+	vifc.cb.read_pointer   <= 5'h1F;         // initialize read pointer
+    vifc.cb.load_en        <= 1'b0;          // initialize load control line
+    vifc.cb.reset_n       <= 1'b0;          // assert reset_n (active low)
+    repeat (2) @vifc.cb ;     // hold in reset for 2 clock cycles
+    vifc.cb.reset_n        <= 1'b1;          // deassert reset_n (active low)
+
+endtask
+
+
+function asign_signals;
+
+
+	vifc.cb.operand_a <= tr.operand_a;
+	vifc.cb.operand_b <= tr.operand_b;
+	vifc.cb.opcode <= tr.opcode;
+	vifc.cb.write_pointer<=tr.write_pointer;
+
+endfunction
+
 task generate_transaction;
 
-	tr.write_pointer  = 5'h00;         // initialize write pointer
-    vifc.cb.read_pointer   <= 5'h1F;         // initialize read pointer
+	
+	//tr.write_pointer  = 5'h00;         // initialize write pointer
+    
+	reset_transaction;
+	
+/*	vifc.cb.write_pointer  <= 5'h00;   
+	vifc.cb.read_pointer   <= 5'h1F;         // initialize read pointer
     vifc.cb.load_en        <= 1'b0;          // initialize load control line
     vifc.cb.reset_n       <= 1'b0;          // assert reset_n (active low)
     repeat (2) @vifc.cb ;     // hold in reset for 2 clock cycles
     vifc.cb.reset_n        <= 1'b1;          // deassert reset_n (active low)
 	
+	*/
+	
 	@vifc.cb vifc.load_en <= 1'b1;  // enable writing to register
 	
 	repeat(3) begin
-	tr.randomize_transaction;
-	tr.print_transaction;
+	//@vifc.cb tr.randomize_transaction;
 	
+	tr.randomize;
 	
-	vifc.cb.operand_a <= tr.operand_a;
+	asign_signals;
+		
+		
+		/*vifc.cb.operand_a <= tr.operand_a;
 	vifc.cb.operand_b <= tr.operand_b;
 	vifc.cb.opcode <= tr.opcode;
+	vifc.cb.write_pointer<=tr.write_pointer;
+	
+	
+	*/
+	
+	@vifc.cb tr.print_transaction;
+	
+	
+
 	
 	end
 	
 	 @vifc.cb vifc.cb.load_en <= 1'b0;  // turn-off writing to register
-	
+	 @vifc.cb;
 endtask	
 
 endclass:driver;
@@ -131,6 +195,8 @@ initial begin
 	
 	dr.generate_transaction;
 	mon.read_transcation;
+	
+	 
 	
 	$finish;
 
