@@ -16,7 +16,7 @@ class transaction;
 
 	rand opcode_t opcode;
 	rand operand_t   operand_a, operand_b;
-	rand address_t  write_pointer;
+	address_t  write_pointer;
 
 
 constraint const_A{
@@ -53,7 +53,7 @@ opcode < 16;
     operand_a     = $random(seed)%16;                 // between -15 and 15
     operand_b     = $unsigned($random)%16;            // between 0 and 15
     opcode        = opcode_t'($unsigned($random)%8);  // between 0 and 7, cast to opcode_t type
-    write_pointer = temp++;
+    
   endfunction: randomize_transaction
 
 */
@@ -97,11 +97,14 @@ endtask
 
 function asign_signals;
 
+	static int temp = 0;
 
 	vifc.cb.operand_a <= tr.operand_a;
 	vifc.cb.operand_b <= tr.operand_b;
 	vifc.cb.opcode <= tr.opcode;
-	vifc.cb.write_pointer<=tr.write_pointer;
+	vifc.cb.write_pointer <= temp++;
+	
+	
 
 endfunction
 
